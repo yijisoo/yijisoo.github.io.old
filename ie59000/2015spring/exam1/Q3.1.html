@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>IE59000</title>
+  <meta charset="utf-8">
+  <meta name="viewpoint" content="width=device-width, initial-scale=1">
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+  <!-- D3 -->
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+  <style>
+
+    body {
+      font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+  </style>
+  
+</head>
+
+<body>
+  <h1>Number of Students in Five Universities</h1>
+  <div id="vis_here">
+  </div>
+
+  <script type="text/javascript">
+    // The following code was inspired by http://bl.ocks.org/mbostock/3886208
+
+    var newdataset = [];
+    var seniors;
+
+    function visualize(dataset) {
+      var w = 800;
+      var h = 300;
+      var padding = 60;
+      var w_legend;
+
+      // construct newdataset only with the data with Senior, resulting:
+      // newdataset = [{"name":"University A", "num_seniors":90}, {"name":"University B", "num_seniors":91}, ...]
+
+      seniors = dataset.filter(function(d){ return d["Year"] === "Senior";})[0];
+      delete seniors.Year;
+      d3.keys(seniors).forEach(function(key) {
+        newdataset.push({
+          name: key,
+          num_seniors: seniors[key]
+        });
+      });
+
+      // construct newdataset using the list of universities
+
+      var xScale = d3.scale.ordinal()
+                    .domain(newdataset.map(function(d){return d.name;}))
+                    .rangeRoundBands([padding, w - padding], 0.05);
+
+      var yScale = d3.scale.linear()
+                    .domain([0, d3.max(newdataset.map(function(d){return d.num_seniors;}))])
+                    .range([h - padding, padding]);
+
+      var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+      var yAxis = d3.svg.axis().scale(yScale).orient("left");
+      
+      var svg = d3.select("#vis_here")
+              .append("svg")
+              .attr("width", w)
+              .attr("height", h);
+
+      svg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + (h - padding) + ")")
+          .call(xAxis);
+
+      svg.append("g")
+          .attr("class", "y axis")
+          .attr("transform", "translate(" + padding + ", 0)")
+          .call(yAxis);
+
+      svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 10)
+            .attr("x", -padding)
+            .attr("dy", "1em")
+            .style("text-anchor", "end")
+            .text("# of senior students");
+
+      svg.selectAll(".rect")
+        .data(newdataset)
+        .enter()
+          .append("rect")
+          .attr("x", function(d) { return xScale(d.name); })
+          .attr("width", xScale.rangeBand())
+          .attr("y", function(d) { return yScale(d.num_seniors); })
+          .attr("height", function(d) { return h - padding - yScale(d.num_seniors);})
+          .style("fill", "#ca0020");
+
+      svg.selectAll(".data_label")
+        .data(newdataset)
+        .enter()
+          .append("g")
+          .attr("class", "data_label")
+            .append("text")
+            .text(function(d) { return d.num_seniors; })
+            .attr("x", function(d) { return xScale(d.name) + xScale.rangeBand() / 2; })
+            .attr("y", function(d) { return yScale(d.num_seniors) + 15; })
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "11px")
+            .attr("fill", "white");
+
+    }
+
+    d3.json('https://hivelab.org/static/exam1.json', function(error, json) {
+      if (error) return console.warn(error);
+      visualize(json);
+    })
+
+  </script>
+
+</body>
+
+</html>
